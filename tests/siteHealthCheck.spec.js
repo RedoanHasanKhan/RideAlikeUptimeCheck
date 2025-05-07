@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const URL_TO_TEST = 'https://ridealike.com/';
+const URL_TO_TEST = 'https://ridealike.co/';
 
 test.describe('Site Health Check', () => {
   test('Page loads successfully', async ({ page }) => {
