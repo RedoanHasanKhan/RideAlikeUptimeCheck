@@ -2,7 +2,7 @@ name: Playwright Uptime Monitoring
 
 on:
   schedule:
-    - cron: '0 */12 * * * *'  # Every 12 mint
+    - cron: '*/12 * * * *'  # Every 12 minutes
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
@@ -37,8 +37,8 @@ jobs:
         with:
           server_address: smtp.gmail.com
           server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME}}
-          password: ${{ secrets.EMAIL_PASSWORD}}
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
           subject: Playwright Test Failed on ${{ matrix.browser }}
           body: |
             The Playwright test failed on ${{ matrix.browser }}.
