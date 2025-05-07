@@ -45,3 +45,9 @@ jobs:
             Please check the GitHub Actions logs for details.
           to: redoan.khan@brainstation-23.com
           from: Playwright CI <${{ secrets.EMAIL_USERNAME }}>
+      - name: Run Playwright tests on ${{ matrix.browser }}
+        env:
+          LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
+          LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
+        run: npx playwright test --project=${{ matrix.browser }}
+
