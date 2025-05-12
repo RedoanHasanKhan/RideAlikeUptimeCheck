@@ -16,3 +16,4 @@ export default defineConfig({
   ],
   reporter: [['list'], ['html', { outputFolder: 'playwright-report' }]],
 });
+require('dotenv').config();

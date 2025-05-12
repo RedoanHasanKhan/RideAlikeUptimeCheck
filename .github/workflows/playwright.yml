@@ -2,11 +2,12 @@ name: Playwright Uptime Monitoring
 
 on:
   schedule:
-    - cron: '*/59 * * * *'  # Every 12 minutes
+    - cron: '*/1 * * * *'  # Every 12 minutes
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
-  test:
+  production:
+    name: Production Test
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,8 +29,11 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests on ${{ matrix.browser }}
-        run: npx playwright test --project=${{ matrix.browser }}
+      - name: Run Production Playwright tests
+        env:
+          LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
+          LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
+        run: npx playwright test tests/siteHealthCheck.spec.js --project=${{ matrix.browser }}
 
       - name: Send email on failure
         if: failure()
@@ -39,15 +43,55 @@ jobs:
           server_port: 465
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: Playwright Test Failed on ${{ matrix.browser }}
+          subject: "🚨 Production Playwright Test Failed on ${{ matrix.browser }}"
           body: |
-            The Playwright test failed on ${{ matrix.browser }}.
-            Please check the GitHub Actions logs for details.
+            The Production Playwright test failed on ${{ matrix.browser }}.
+            Check the GitHub Actions logs for details.
           to: redoan.khan@brainstation-23.com
           from: Playwright CI <${{ secrets.EMAIL_USERNAME }}>
-      - name: Run Playwright tests on ${{ matrix.browser }}
-        env:
-          LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
-          LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
-        run: npx playwright test --project=${{ matrix.browser }}
 
+  lower-env:
+    name: Test & Stage Env Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Lower Env Playwright tests
+        env:
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          STAGE_EMAIL: ${{ secrets.STAGE_EMAIL }}
+          STAGE_PASSWORD: ${{ secrets.STAGE_PASSWORD }}
+        run: npx playwright test tests/lowerEnvcheck.spec.js --project=${{ matrix.browser }}
+
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "⚠️ Lower Env Playwright Test Failed on ${{ matrix.browser }}"
+          body: |
+            The Lower Env (Test/Stage) Playwright test failed on ${{ matrix.browser }}.
+            Check the GitHub Actions logs for details.
+          to: redoan.khan@brainstation-23.com
+          from: Playwright CI <${{ secrets.EMAIL_USERNAME }}>
