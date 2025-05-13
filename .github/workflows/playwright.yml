@@ -95,3 +95,51 @@ jobs:
             Check the GitHub Actions logs for details.
           to: redoan.khan@brainstation-23.com
           from: Playwright CI <${{ secrets.EMAIL_USERNAME }}>
+  admin-web-check:
+    name: WebAdmin Uptime Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]  
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run WebAdmin Playwright tests
+        env:
+          ADMIN_PROD_EMAIL: ${{ secrets.ADMIN_PROD_EMAIL }}
+          ADMIN_PROD_PASSWORD: ${{ secrets.ADMIN_PROD_PASSWORD }}
+          ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
+          ADMIN_TEST_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
+          ADMIN_STAGE_EMAIL: ${{ secrets.ADMIN_STAGE_EMAIL }}
+          ADMIN_STAGE_PASSWORD: ${{ secrets.ADMIN_STAGE_PASSWORD }}
+        run: npx playwright test tests/webadminuptime.spec.js --project=${{ matrix.browser }}
+
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "⚠️ WebAdmin Login Test Failed on ${{ matrix.browser }}"
+          body: |
+            One or more WebAdmin login tests failed on ${{ matrix.browser }}.
+            Check the GitHub Actions logs for details.
+          to: redoan.khan@brainstation-23.com
+          from: Playwright CI <${{ secrets.EMAIL_USERNAME }}>
+
